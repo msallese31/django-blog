@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Post
+from .models import Post, PostType
 from django.contrib.auth.models import User
 from django.views.generic import (
     ListView,
@@ -20,13 +20,15 @@ def home(request):
 
 class PostListView(ListView):
     model = Post
-    # template_name required because we went against convention
-    # convention would be: blog/post_list.html (or <app>/<model>_<viewtype>.html)
-    template_name = 'blog/home.html'
     context_object_name = 'posts'
+    post_type_id = None
     # Order blogs newest to oldest
     ordering = ['-date_posted']
     paginate_by = 3
+
+    def get(self, request, *args, **kwargs):
+        self.queryset = Post.objects.filter(post_type=self.post_type_id)
+        return super().get(request)
 
 
 class UserPostListView(ListView):
@@ -48,7 +50,7 @@ class PostDetailView(DetailView):
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
-    fields = ['title', 'content']
+    fields = ['title', 'content', 'post_type']
 
     # Overridden
     def form_valid(self, form):
@@ -84,3 +86,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 def about(request):
     return render(request, 'blog/about.html', {'title': 'About'})
+
+
+def home(request):
+    return render(request, 'blog/home.html', {'title': 'Mike Sallese'})
